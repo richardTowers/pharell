@@ -1,14 +1,14 @@
 module Network.PcapHarHa.Lib ( readPcap ) where
 
-import Data.IORef
-import Network.Pcap
 import qualified Data.ByteString.Char8 as C
+import           Data.IORef
+import           Network.Pcap
 
 printPcap :: [(PktHdr, C.ByteString)] -> IO ()
 printPcap xs = do
     let (hdr, bdy) = head xs
-    print $ hdr
-    C.putStrLn $ bdy
+    print hdr
+    C.putStrLn bdy
 
 readPcap :: IO ()
 readPcap = do
@@ -31,4 +31,3 @@ pcapCallback :: ((PktHdr, C.ByteString) -> IO ()) -> Callback
 pcapCallback store header word = do
     packet <- toBS (header, word)
     store packet
-
