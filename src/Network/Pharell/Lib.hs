@@ -2,13 +2,36 @@ module Network.Pharell.Lib ( readPcap ) where
 
 import qualified Data.ByteString.Char8 as C
 import           Data.IORef
+import           Data.IP
+import           Data.TCP
+import           Data.Serialize        (decode)
 import           Network.Pcap
 
 printPcap :: [(PktHdr, C.ByteString)] -> IO ()
 printPcap xs = do
-    let (hdr, bdy) = head xs
-    print hdr
-    C.putStrLn bdy
+    let (_, bdy) = head xs
+    let goodBdy = C.drop 4 bdy
+    case decodeIPv4Header goodBdy of
+        (Left str) -> error str
+        (Right header) -> do
+            print header
+            thing <- doTheThing header goodBdy
+            C.putStrLn thing
+
+doTheThing :: IPv4Header -> C.ByteString -> IO C.ByteString
+doTheThing header bdy = do
+    let tcpBdy = C.drop (4 * hdrLength header) bdy
+    case decodeTcpHeader tcpBdy of
+        (Left str) -> error str
+        (Right header) -> do
+            print header
+            return $ C.drop (4 * dataOffset header) tcpBdy
+
+decodeIPv4Header :: C.ByteString -> Either String IPv4Header
+decodeIPv4Header = decode
+
+decodeTcpHeader :: C.ByteString -> Either String TCPHeader
+decodeTcpHeader = decode
 
 readPcap :: IO ()
 readPcap = do
