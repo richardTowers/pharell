@@ -7,31 +7,34 @@ import           Data.TCP
 import           Data.Serialize        (decode)
 import           Network.Pcap
 
+right :: Either String b -> b
+right (Left x) = error x
+right (Right x) = x
+
 printPcap :: [(PktHdr, C.ByteString)] -> IO ()
 printPcap xs = do
     let (_, bdy) = head xs
-    let goodBdy = C.drop 4 bdy
-    case decodeIPv4Header goodBdy of
-        (Left str) -> error str
-        (Right header) -> do
-            print header
-            thing <- doTheThing header goodBdy
-            C.putStrLn thing
+    let ipBdy = C.drop 4 bdy
+    let (ipHdr, tcpBdy) = stripIpHeader ipBdy
+    let (tcpHdr, httpMessage) = stripTcpHeader tcpBdy
+    putStrLn "\nIP Header\n---------------"
+    print ipHdr
+    putStrLn "\nTCP Header\n---------------"
+    print tcpHdr
+    putStrLn "\nHTTP Message\n---------------"
+    C.putStrLn httpMessage
 
-doTheThing :: IPv4Header -> C.ByteString -> IO C.ByteString
-doTheThing header bdy = do
-    let tcpBdy = C.drop (4 * hdrLength header) bdy
-    case decodeTcpHeader tcpBdy of
-        (Left str) -> error str
-        (Right header) -> do
-            print header
-            return $ C.drop (4 * dataOffset header) tcpBdy
+stripIpHeader :: C.ByteString -> (IPv4Header, C.ByteString)
+stripIpHeader bs = do
+    let hdr = right $ decode bs :: IPv4Header
+    let bdy = C.drop (4 * hdrLength hdr) bs
+    (hdr, bdy)
 
-decodeIPv4Header :: C.ByteString -> Either String IPv4Header
-decodeIPv4Header = decode
-
-decodeTcpHeader :: C.ByteString -> Either String TCPHeader
-decodeTcpHeader = decode
+stripTcpHeader :: C.ByteString -> (TCPHeader, C.ByteString)
+stripTcpHeader bs = do
+    let hdr = right $ decode bs :: TCPHeader
+    let bdy = C.drop (4 * dataOffset hdr) bs
+    (hdr, bdy)
 
 readPcap :: IO ()
 readPcap = do
