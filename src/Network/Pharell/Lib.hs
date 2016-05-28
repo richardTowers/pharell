@@ -1,4 +1,4 @@
-module Network.PcapHarHa.Lib ( readPcap ) where
+module Network.Pharell.Lib ( readPcap ) where
 
 import qualified Data.ByteString.Char8 as C
 import           Data.IORef

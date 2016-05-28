@@ -1,6 +1,6 @@
 module Main where
 
-import           Network.PcapHarHa.Lib
+import           Network.Pharell.Lib
 
 main :: IO ()
 main = readPcap
