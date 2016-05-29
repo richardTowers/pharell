@@ -1,13 +1,18 @@
 module Network.Pharell.Lib ( readPcap ) where
 
-import qualified Data.ByteString.Char8 as C
+import qualified Data.ByteString.Char8   as C
 import           Data.IORef
 import           Network.Pcap
 import           Network.Pharell.Packets
 
-printPcap :: [(PktHdr, C.ByteString)] -> IO ()
-printPcap xs = do
-    let (_, bdy) = head xs
+printPackets :: [(PktHdr, C.ByteString)] -> IO ()
+printPackets xs = do
+    let actions = map printPacket xs
+    sequence_ actions
+
+printPacket :: (PktHdr, C.ByteString) -> IO ()
+printPacket x = do
+    let (_, bdy) = x
     let (ipHdr, tcpHdr, httpMessage) = parseByteString bdy
     putStrLn "\nIP Header\n---------------"
     print ipHdr
@@ -20,7 +25,7 @@ readPcap :: IO ()
 readPcap = do
     handle <- openOffline "example.pcap"
     setFilter handle ipv4HttpFilter True 0xff
-    readPcapFile handle >>= printPcap
+    readPcapFile handle >>= printPackets
     where ipv4HttpFilter = "tcp and (((ip[2:2] - ((ip[0]&0xf)<<2)) - ((tcp[12]&0xf0)>>2)) != 0)"
 
 readPcapFile :: PcapHandle -> IO [(PktHdr, C.ByteString)]
