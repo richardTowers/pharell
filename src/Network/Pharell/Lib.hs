@@ -2,17 +2,13 @@ module Network.Pharell.Lib ( readPcap ) where
 
 import qualified Data.ByteString.Char8 as C
 import           Data.IORef
-import           Data.IP
-import           Data.Serialize        (decode)
-import           Data.TCP
 import           Network.Pcap
+import           Network.Pharell.Packets
 
 printPcap :: [(PktHdr, C.ByteString)] -> IO ()
 printPcap xs = do
     let (_, bdy) = head xs
-    let ipBdy = C.drop 4 bdy
-    let (ipHdr, tcpBdy) = stripIpHeader ipBdy
-    let (tcpHdr, httpMessage) = stripTcpHeader tcpBdy
+    let (ipHdr, tcpHdr, httpMessage) = parseByteString bdy
     putStrLn "\nIP Header\n---------------"
     print ipHdr
     putStrLn "\nTCP Header\n---------------"
@@ -20,27 +16,16 @@ printPcap xs = do
     putStrLn "\nHTTP Message\n---------------"
     C.putStrLn httpMessage
 
-stripIpHeader :: C.ByteString -> (IPv4Header, C.ByteString)
-stripIpHeader bs = case decode bs of
-    Left  msg -> error msg
-    Right hdr -> (hdr, C.drop (4 * hdrLength hdr) bs)
-
-stripTcpHeader :: C.ByteString -> (TCPHeader, C.ByteString)
-stripTcpHeader bs = case decode bs of
-    Left  msg -> error msg
-    Right hdr -> (hdr, C.drop (4 * dataOffset hdr) bs)
-
 readPcap :: IO ()
 readPcap = do
     handle <- openOffline "example.pcap"
-    setFilter handle pcapFilter True 0xff
+    setFilter handle ipv4HttpFilter True 0xff
+    readPcapFile handle >>= printPcap
+    where ipv4HttpFilter = "tcp and (((ip[2:2] - ((ip[0]&0xf)<<2)) - ((tcp[12]&0xf0)>>2)) != 0)"
+
+readPcapFile :: PcapHandle -> IO [(PktHdr, C.ByteString)]
+readPcapFile handle = do
     packetStore <- newIORef []
-    _ <- dispatch handle (-1) (pcapCallback $ storePacket packetStore)
-    reverse <$> readIORef packetStore >>= printPcap
-    where pcapFilter = "tcp and (((ip[2:2] - ((ip[0]&0xf)<<2)) - ((tcp[12]&0xf0)>>2)) != 0)"
-
-storePacket :: IORef [(PktHdr, C.ByteString)] -> (PktHdr, C.ByteString) -> IO ()
-storePacket ioRef packetList = modifyIORef ioRef (packetList:)
-
-pcapCallback :: ((PktHdr, C.ByteString) -> IO ()) -> Callback
-pcapCallback store header word = toBS (header, word) >>= store
+    _ <- dispatch handle (-1) (callback (\x -> modifyIORef packetStore (x:)))
+    reverse <$> readIORef packetStore
+    where callback store hdr wrd = toBS (hdr, wrd) >>= store
