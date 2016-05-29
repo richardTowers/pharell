@@ -1,16 +1,22 @@
-module Network.Pharell.Packets ( parseByteString ) where
+module Network.Pharell.Packets ( parseByteString, Packet(..) ) where
 
 import qualified Data.ByteString.Char8 as C
 import           Data.IP
 import           Data.Serialize        (decode)
 import           Data.TCP
 
-parseByteString :: C.ByteString -> (IPv4Header, TCPHeader, C.ByteString)
+data Packet = Packet {
+    ipv4Header :: IPv4Header,
+    tcpHeader  :: TCPHeader,
+    body       :: C.ByteString
+} deriving Show
+
+parseByteString :: C.ByteString -> Packet
 parseByteString bs = do
     let ipBs = stripLinkLayerHeader bs
     let (ipHdr, tcpBs) = stripIpHeader ipBs
     let (tcpHdr, httpBs) = stripTcpHeader tcpBs
-    (ipHdr, tcpHdr, httpBs)
+    Packet ipHdr tcpHdr httpBs
 
 -- |Drops the link layer header. For loopback on OS X this is 4 bytes.
 -- TODO: what about ethernet / other OSs?

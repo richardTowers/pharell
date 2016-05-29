@@ -3,15 +3,10 @@ module Network.Pharell.Lib ( readPcap ) where
 import qualified Data.ByteString.Char8   as C
 import           Data.IORef
 import           Network.Pcap
-import           Network.Pharell.Packets
+import           Network.Pharell.Packets ( parseByteString )
 
 printPackets :: [(PktHdr, C.ByteString)] -> IO ()
-printPackets = mapM_ (\x -> do
-    let (ipHdr, tcpHdr, httpMessage) = parseByteString $ snd x
-    putStrLn "\nIP Header\n---------------" >> print ipHdr
-    putStrLn "\nTCP Header\n---------------" >> print tcpHdr
-    putStrLn "\nHTTP Message\n---------------" >> C.putStrLn httpMessage
-    )
+printPackets = mapM_ $ print . parseByteString . snd
 
 readPcap :: IO ()
 readPcap = do
