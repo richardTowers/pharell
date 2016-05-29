@@ -6,20 +6,12 @@ import           Network.Pcap
 import           Network.Pharell.Packets
 
 printPackets :: [(PktHdr, C.ByteString)] -> IO ()
-printPackets xs = do
-    let actions = map printPacket xs
-    sequence_ actions
-
-printPacket :: (PktHdr, C.ByteString) -> IO ()
-printPacket x = do
-    let (_, bdy) = x
-    let (ipHdr, tcpHdr, httpMessage) = parseByteString bdy
-    putStrLn "\nIP Header\n---------------"
-    print ipHdr
-    putStrLn "\nTCP Header\n---------------"
-    print tcpHdr
-    putStrLn "\nHTTP Message\n---------------"
-    C.putStrLn httpMessage
+printPackets = mapM_ (\x -> do
+    let (ipHdr, tcpHdr, httpMessage) = parseByteString $ snd x
+    putStrLn "\nIP Header\n---------------" >> print ipHdr
+    putStrLn "\nTCP Header\n---------------" >> print tcpHdr
+    putStrLn "\nHTTP Message\n---------------" >> C.putStrLn httpMessage
+    )
 
 readPcap :: IO ()
 readPcap = do
