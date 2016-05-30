@@ -3,17 +3,22 @@ module Network.Pharell.Lib ( readPcap ) where
 import qualified Data.ByteString.Char8   as C
 import           Data.IORef
 import           Network.Pcap
-import           Network.Pharell.Packets ( parseByteString )
+import           Network.Pharell.Packets ( parseByteString, Packet(..) )
+import           Data.TCP
+import           Control.Arrow
 
 printPackets :: [(PktHdr, C.ByteString)] -> IO ()
-printPackets = mapM_ $ print . parseByteString . snd
+printPackets xs = do
+    let packets = map (parseByteString . snd) xs
+    let tcpHeaders = map tcpHeader packets
+    let seqs = map (seqNumber &&& ackNumber) tcpHeaders
+    mapM_ print seqs
 
 readPcap :: IO ()
 readPcap = do
     handle <- openOffline "example.pcap"
-    setFilter handle ipv4HttpFilter True 0xff
+    setFilter handle "tcp" True 0xffffffff
     readPcapFile handle >>= printPackets
-    where ipv4HttpFilter = "tcp and (((ip[2:2] - ((ip[0]&0xf)<<2)) - ((tcp[12]&0xf0)>>2)) != 0)"
 
 readPcapFile :: PcapHandle -> IO [(PktHdr, C.ByteString)]
 readPcapFile handle = do
