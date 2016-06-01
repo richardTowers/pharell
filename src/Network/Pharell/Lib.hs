@@ -3,11 +3,12 @@ module Network.Pharell.Lib ( readPcap ) where
 import           Control.Arrow           ((&&&))
 import qualified Data.ByteString.Char8   as C
 import           Data.Function           (on)
-import           Data.IORef
+import           Data.IORef              (modifyIORef, newIORef, readIORef)
 import           Data.List               (groupBy, sortBy)
 import           Data.Ord                (comparing)
-import           Data.TCP
-import           Network.Pcap
+import           Data.TCP                (TCPHeader (..))
+import           Network.Pcap            (PcapHandle, PktHdr, dispatch,
+                                          openOffline, setFilter, toBS)
 import           Network.Pharell.Packets (Packet (..), parseByteString)
 
 printPackets :: [(PktHdr, C.ByteString)] -> IO ()
