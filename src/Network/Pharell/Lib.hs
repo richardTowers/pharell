@@ -17,13 +17,10 @@ printPackets xs = do
     -- TODO: this "algorithm" depends on a sorted list to group tcp streams.
     -- This means that streaming input isn't going to work. Fine while we're
     -- exploring though.
-    let sortedPackets = sortBy (comparing (sp &&& dp)) packets
-    let groupedPackets = groupBy ((==) `on` (sp &&& dp)) sortedPackets
-
-    mapM_ (print . (sp &&& dp) . head) groupedPackets
-
-    where sp = srcPort . tcpHeader
-          dp = dstPort . tcpHeader
+    let sourceAndDestPort = (srcPort &&& dstPort) . tcpHeader
+    let sortedPackets = sortBy (comparing sourceAndDestPort) packets
+    let groupedPackets = groupBy ((==) `on` sourceAndDestPort) sortedPackets
+    mapM_ (print . (sourceAndDestPort . head &&& length)) groupedPackets
 
 readPcap :: IO ()
 readPcap = do
