@@ -1,4 +1,4 @@
-module Network.Pharell.Packets ( parseByteString, Packet(..) ) where
+module Network.Pharrell.Packets ( parseByteString, Packet(..) ) where
 
 import qualified Data.ByteString.Char8 as C
 import           Data.IP

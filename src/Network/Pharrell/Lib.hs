@@ -1,4 +1,4 @@
-module Network.Pharell.Lib ( readPcap ) where
+module Network.Pharrell.Lib ( readPcap ) where
 
 import           Control.Arrow           ((&&&))
 import qualified Data.ByteString.Char8   as C
@@ -9,7 +9,7 @@ import           Data.Ord                (comparing)
 import           Data.TCP                (TCPHeader (..))
 import           Network.Pcap            (PcapHandle, PktHdr, dispatch,
                                           openOffline, setFilter, toBS)
-import           Network.Pharell.Packets (Packet (..), parseByteString)
+import           Network.Pharrell.Packets (Packet (..), parseByteString)
 
 printPackets :: [(PktHdr, C.ByteString)] -> IO ()
 printPackets xs = do
