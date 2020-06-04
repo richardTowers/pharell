@@ -3,12 +3,6 @@ pharrell
 
 `pharrell` reconstructs HTTP Archives (HARs) from Packet Captures (pcaps). It's similar to [pcap2har](https://github.com/andrewf/pcap2har), only it's written in Haskell instead of Python.
 
-<a href=https://youtu.be/mXC3h95PtDY>
-
-![Clip from "She wants to move" - N.E.R.D.](https://media.giphy.com/media/Utv7SAZvuCZNu/giphy.gif)
-
-</a>
-
 Name
 -------------
 
